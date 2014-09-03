@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+	<link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="css/dc.css"/>
+	<link rel="stylesheet" type="text/css" href="css/font-awesome.min.css">
+	<script src="http://d3js.org/queue.v1.min.js"></script>
+	<meta charset="UTF-8">
+	<title>EagleEye</title>
+	<style>
+		.container { width:100%; margin: 0; padding: 0px; }
+		.row {
+			margin: 0;
+			padding: 0;
+			width: 100%;
+		}
+		#world-chart {
+			cursor: pointer;
+		}
+		#timeseries-chart {
+			position: fixed;
+			bottom: 0;
+			left: 0;
+			z-index: 20;
+			background: white;
+			opacity: 0.9;
+			width: 100%;
+		}
+		body {
+			margin-top: 50px;
+			overflow-x: hidden;
+			margin-bottom: 120px;
+		}
+		.container {
+			display: none;
+		}
+		h1 {
+			margin-top: 0;
+			padding: 0;
+		}
+		#loading {
+			position: absolute;
+			top: 300px;
+			left: calc(50% - 50px);
+			color: #333;
+			font-size: 100px;
+		}
+		#city-chart .tick {
+			display: none;
+		}
+		#brand {
+			float: left;
+			
+			font-size: 24pt;
+			color: #333;
+			margin-left: 10px;
+		}
+
+		#data-size {
+			position: relative;
+			bottom: 10px;
+			left: 20px;
+			font-size: 16pt;
+
+		}
+		.col-md-10 {
+			padding: 0;
+		}
+
+		.dc-chart g.row text {fill: black;}
+		.dc-chart g.pie-slice text {fill: black;}
+
+		.countries {
+			stroke: #777;
+			stroke-width: 1px;
+		}
+		#zoom-controls {
+			position: absolute;
+			bottom: 30%;
+			width: 50px;
+			left: 20px;
+			z-index: 12;
+		}
+		#data-size {
+			position: fixed;
+			top: 0px;
+			left: 0px;
+			text-align: right;
+			background: white;
+			opacity: 0.9;
+			z-index: 25;
+			height: 50px;
+			width: 100%;
+		}
+		#data-size .dc-data-count {
+			float: right;
+			margin: 0;
+			margin-top: 8px;
+		}
+		#map-div {
+			height: 500px;
+			width: 1100px;
+		}
+		#zoom-controls button {
+			background: white;
+			border: 1px solid #ccc;
+			margin-top:5px;
+			outline: none;
+			font-size: 16pt;
+			width: 50px;
+			height: 50px;
+			vertical-align: middle;
+			text-align: center;
+		}
+		#map-view #map {
+			display: none;
+		}
+		#map-view.google-maps #map {
+			display: block;
+		}
+		#map-view.google-maps #globe {
+			display: none;
+		}
+		#map-container.google-maps #zoom-in {
+			display: none;
+		}
+		#map-container.google-maps #zoom-out {
+			display: none;
+		}
+		#map-container #map-div {
+			display: none;
+		}
+		#map-container.google-maps #map-div {
+			display: block;
+		}
+		#map-container.google-maps #world-chart {
+			display: none;
+		}
+
+    </style>
+</head>
+
+<body>
+<div id="loading">
+	<i class="fa fa-cog fa-spin"></i>
+</div>
+<div class="container">
+	<div id="data-size">
+	<div id="brand"><b>Eagle</b>Eye</div>
+		<div class="dc-data-count">
+			<span class="filter-count"></span> / <span class="total-count"></span> downloads | <a href="javascript:dc.filterAll(); dc.renderAll();">Reset All</a>
+		</div>
+	</div>
+	<div id="timeseries-chart" style='margin-left:10px'>
+		<center><strong>Downloads over time</strong></center>
+		<span class="reset" style="display: none;">range: <span class="filter"></span></span>
+		<a class="reset" href="javascript:timeseriesChart.filterAll();volumeChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+		<div class="clearfix"></div>
+	</div>
+		
+	<div class="row noscroll">
+		<div class="col-md-10 noscroll" id="map-container">
+			<div id="map-div"></div>
+			<div id="world-chart"></div>
+		
+			<div id="zoom-controls">
+				<button class="btn btn-secondary" id="map-view"><i class="fa fa-map-marker" id="map"></i><i class="fa fa-globe" id="globe"></i></button>
+				<button class="btn btn-default" id="zoom-in">+</button>
+				<button class="btn btn-default" id="zoom-out">-</button>
+			</div>
+		</div>
+
+		<div class="col-md-2">
+
+			<div id="city-chart"> <strong>By City</strong>
+				<a class="reset" href="javascript:cityChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+				<div class="clearfix"></div>
+			</div>
+
+
+			<div id="day-of-week-chart"> <strong>Day of Week</strong>
+				<a class="reset" href="javascript:dayOfWeekChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+				<div class="clearfix"></div>
+			</div>
+
+		</div>
+
+	</div>
+
+	<div class="row">
+		<div class="col-md-12">
+			<div id="bubble-chart"> <strong>Offenders</strong>
+				<a class="reset" href="javascript:bubbleChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+				<div class="clearfix"></div>
+			</div>
+		</div>
+	</div>
+
+
+
+	<!-- <div class="row">
+		<div class="col-md-12">
+			
+		</div>
+	</div>
+
+ -->
+
+
+	<div class="row">
+
+		<div class="col-md-6">
+			<div id="age-histogram"> <strong>Age</strong>
+				<span class="reset" style="display: none;">range: <span class="filter"></span></span>
+				<a class="reset" href="javascript:ageHistogram.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+				<div class="clearfix"></div>
+			</div>
+		</div>
+
+
+		<div class="col-md-3">
+			<div id="filesize-histogram"> <strong>File Size</strong>
+				<span class="reset" style="display: none;">range: <span class="filter"></span></span>
+				<a class="reset" href="javascript:filesizeHistogram.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+				<div class="clearfix"></div>
+			</div>
+		</div>
+
+
+		<div class="col-md-2 col-md-offset-1">
+			<div id="filetype-chart"> <strong>File Type</strong>
+				<a class="reset" href="javascript:fileTypeChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+				<div class="clearfix"></div>
+			</div>
+		</div>
+
+
+
+	</div>
+
+
+	<div class="row">
+		<div class="col-md-6">
+			<div id="filename-chart"> <strong>Filename</strong>
+				<a class="reset" href="javascript:fileNameChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+				<div class="clearfix"></div>
+			</div>
+		</div>
+		<div class="col-md-3">
+			<div id="username-chart"> <strong>User</strong>
+				<a class="reset" href="javascript:userNameChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+				<div class="clearfix"></div>
+			</div>
+		</div>
+		<div class="col-md-3" style="margin-left: -5px;box-sizing:border-box;">
+			<div id="ip-chart"> <strong>IP Addresses</strong>
+				<a class="reset" href="javascript:ipChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+				<div class="clearfix"></div>
+			</div>
+		</div>
+	</div>
+
+
+
+
+</div><!-- container -->
+<script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?libraries=visualization"></script>
+<script type="text/javascript" src="js/d3.js"></script>
+<script type="text/javascript" src="js/crossfilter.js"></script>
+<script type="text/javascript" src="js/dc.js"></script>
+<script type="text/javascript" src="js/colorbrewer.js"></script>
+<script type="text/javascript" src="js/jquery-2.1.1.min.js"></script>
+<script type="text/javascript" src="script.js"></script>
+<script src="setup.js"></script>
+<script>
+	$('#map-view').click(function(){
+		$('#map-view').toggleClass('google-maps');
+		$('#map-container').toggleClass('google-maps');
+		google.maps.event.trigger(map, 'resize');
+		window.renderAll();
+	});
+</script>
+<script>
+  document.addEventListener('DOMContentLoaded', init, false);
+</script>
+</body>
+</html>
